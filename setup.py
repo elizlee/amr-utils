@@ -12,7 +12,7 @@ setuptools.setup(
      description="A toolkit of operations for AMRs",
      long_description=long_description,
      long_description_content_type="text/markdown",
-     url="https://github.com/ablodge/amr-utils",
+     url="https://github.com/elizlee/amr-utils",
      packages=setuptools.find_packages(),
      classifiers=[
          "Programming Language :: Python :: 3",

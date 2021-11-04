@@ -34,15 +34,15 @@ class AMR_Alignment:
         return {'type':self.type, 'tokens':self.tokens.copy(), 'nodes':self.nodes.copy(), 'edges':self.edges.copy()}
 
     def readable(self, amr):
-        type = '' if self.type=='basic' else self.type
+        alignment_type = '' if self.type=='basic' else self.type
         nodes = '' if not self.nodes else ", ".join(amr.nodes[n] for n in self.nodes)
         edges = '' if not self.edges else ", ".join(str((amr.nodes[s],r,amr.nodes[t])) for s,r,t in self.edges)
         tokens = " ".join(amr.tokens[t] for t in self.tokens)
         if nodes and edges:
             edges = ', '+edges
-        if type:
-            type += ' : '
-        return f'{type}{tokens} => {nodes}{edges}'
+        if alignment_type:
+            alignment_type += ' : '
+        return f'{alignment_type}{tokens} => {nodes}{edges}'
 
 
 def load_from_json(json_file, amrs=None, unanonymize=False):

@@ -8,7 +8,7 @@ AMR-utils is a python package for working with AMR data, with tools for reading 
 - Tools for AMR Visualization
 	- Convert AMR graphs to Latex (using the tikz library)
 	- Display AMR strings as HTML, with overridable display settings for nodes, tokens, and edges
-	- AMR Diff, Display differnces between AMRs as HTML
+	- AMR Diff, Display differences between AMRs as HTML
 	- Display AMR Alignments as HTML
 
 ### Requirements
@@ -17,7 +17,7 @@ AMR-utils is a python package for working with AMR data, with tools for reading 
 
 ### Install
 ```
-git clone https://github.com//ablodge/amr-utils
+git clone https://github.com//elizlee/amr-utils
 pip install penman
 pip install ./amr-utils
 ```
@@ -111,7 +111,7 @@ AMR-utils includes tools for visualizing AMRs and AMR aligments. See the wiki fo
 
 ## Latex
 AMR-utils allows you to read AMRs from a text file and output them as latex diagrams, such as the following.
-![latex example](https://github.com/ablodge/amr-utils/blob/master/latex_ex.PNG)
+![latex example](https://github.com/elizlee/amr-utils/blob/master/latex_ex.PNG)
 
 ### Colors
 The default coloring assigns blue to each node, but the parameter `assign_color` can be used to assign colors using a function. To change a color by hand, just rewrite `\node[red]` as `\node[purple]`, etc.
@@ -131,7 +131,7 @@ Add these lines to your latex file:
 
 ## HTML
 AMR-utils allows you to read AMRs from a text file and output them as html. You can look in `style.css` for an example of styling. 
-![html example](https://github.com/ablodge/amr-utils/blob/master/html_ex.PNG)
+![html example](https://github.com/elizlee/amr-utils/blob/master/html_ex.PNG)
 ### Instructions
 Run as follows:
 
@@ -142,7 +142,7 @@ Run as follows:
 
 AMR Diff is a tool for comparing two files of AMRs. The tool uses AMR-to-AMR alignment from [smatch](https://github.com/snowblink14/smatch) to find the differences between pairs of AMRs which contribute to a lower smatch score. AMR Diff is useful for detailed error analysis of AMR parsers. The display includes highlighted differences and mouse-over description text explanation of the error.
 
-![amr diff example](https://github.com/ablodge/amr-utils/blob/master/amr_diff_ex.PNG)
+![amr diff example](https://github.com/elizlee/amr-utils/blob/master/amr_diff_ex.PNG)
 ### Instructions
 Run as follows:
 
@@ -152,7 +152,7 @@ Run as follows:
 ## Display Alignments
 AMR-utils also includes a tool for displaying alignments in an easy-to-read format, with highlights and mouse-over description text of which tokens/nodes/edges are aligned.
 
-![display alignments example](https://github.com/ablodge/amr-utils/blob/master/display_align_ex.PNG)
+![display alignments example](https://github.com/elizlee/amr-utils/blob/master/display_align_ex.PNG)
 ### Instructions
 Run as follows:
 

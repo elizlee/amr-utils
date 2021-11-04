@@ -9,7 +9,7 @@ from amr_utils.alignments import AMR_Alignment, write_to_json, load_from_json
 from amr_utils.amr import AMR
 
 
-class Matedata_Parser:
+class Metadata_Parser:
 
     token_range_re = re.compile('^(\d-\d|\d(,\d)+)$')
     metadata_re = re.compile('(?<=[^#]) ::')
@@ -218,7 +218,7 @@ class AMR_Reader:
         amrs = []
         alignments = {}
         penman_wrapper = PENMAN_Wrapper(style=self.style)
-        metadata_parser = Matedata_Parser()
+        metadata_parser = Metadata_Parser()
 
         with open(amr_file_name, 'r', encoding='utf8') as f:
             sents = f.read().replace('\r', '').split('\n\n')
