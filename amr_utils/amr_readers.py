@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import csv
+from typing import Union, List
 
 import penman
 
@@ -391,7 +392,7 @@ class AMR_Reader:
 
     @staticmethod
     def _parse_amr_from_metadata(tokens, metadata):
-        '''
+        """
            Metadata format is ...
            # ::id sentence id
            # ::tok tokens...
@@ -399,27 +400,50 @@ class AMR_Reader:
            # ::root root_id root
            # ::edge src label trg src_id trg_id alignments
            amr graph
-           '''
+        """
         amr = AMR(tokens=tokens)
         alignments = []
 
+        def _list_tokens(tokens: Union[str, List[str]]) -> List[str]:
+            """Convert any token strings into lists"""
+            if type(tokens) == str:
+                if tokens == "":
+                    return []
+                # A str-type `tokens` should have a format like '11-12'.
+                try:
+                    first_token, last_token = tokens.split("-")
+                    first_tok_int = int(first_token)
+                    last_tok_int = int(last_token)
+                except ValueError:
+                    raise RuntimeError(
+                        "Looks like something is wrong with the token index "
+                        f"conversion; tried to convert index range '{tokens}' "
+                        "to int values"
+                    )
+                return list(range(first_tok_int, last_tok_int + 1))
+            return tokens
+
         nodes = metadata['node']
-        edges = metadata['edge'] if 'edge'in metadata else []
+        edges = metadata['edge'] if 'edge' in metadata else []
         root = metadata['root'][0]
         amr.root = root[0]
         for data in nodes:
             n, label = data[:2]
-            if len(data)>2:
+            if len(data) > 2:
                 toks = data[2]
-                alignments.append(AMR_Alignment(type='jamr', nodes=[n], tokens=toks))
+                # Ensure that `toks` is a list of token_ids
+                tok_list = _list_tokens(toks)
+                alignments.append(AMR_Alignment(type='jamr', nodes=[n], tokens=tok_list))
             amr.nodes[n] = label
         for data in edges:
             _, r, _, s, t = data[:5]
-            if len(data)>5:
+            if len(data) > 5:
                 toks = data[5]
-                alignments.append(AMR_Alignment(type='jamr', edges=[(s,r,t)], tokens=toks))
-            if not r.startswith(':'): r = ':'+r
-            amr.edges.append((s,r,t))
+                tok_list = _list_tokens(toks)
+                alignments.append(AMR_Alignment(type='jamr', edges=[(s, r, t)], tokens=tok_list))
+            if not r.startswith(':'):
+                r = ':'+r
+            amr.edges.append((s, r, t))
         return amr, alignments
 
     @staticmethod
@@ -443,7 +467,6 @@ class AMR_Reader:
         return tokens
 
 
-
 def main():
     dir = sys.argv[1]
     output_file = sys.argv[2]
@@ -452,7 +475,7 @@ def main():
     amrs, alignments = reader.load_from_dir(dir, output_alignments=True)
 
     reader.write_to_file(output_file, amrs)
-    reader.save_alignments_to_json(output_file.replace('.txt','.alignments.json'), alignments)
+    reader.save_alignments_to_json(output_file.replace('.txt', '.alignments.json'), alignments)
 
 
 if __name__ == '__main__':
