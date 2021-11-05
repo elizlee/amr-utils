@@ -1,3 +1,4 @@
+import string
 import sys
 from collections import defaultdict
 from typing import List, Dict
@@ -107,6 +108,23 @@ class AMR:
         for parent, role, arg in self.edges:
             edge_mapping[parent][role].append(arg)
         return edge_mapping
+
+    def get_tokens_from_node(
+            self, input_node: str, alignments: List[AMR_Alignment]
+    ) -> List[str]:
+        amr_tokens = self.tokens
+        token_list_for_node = []
+        for alignment in alignments:
+            alignment_dict = alignment.to_json(self)
+            nodes = alignment_dict["nodes"]
+            tokens = alignment_dict["tokens"]
+            if input_node in nodes:
+                for token in tokens:
+                    token_text = amr_tokens[int(token)]
+                    # ignore punctuation
+                    if token_text not in string.punctuation:
+                        token_list_for_node.append(token_text)
+        return token_list_for_node
 
     def _rename_node(self, a, b):
         if b in self.nodes:
