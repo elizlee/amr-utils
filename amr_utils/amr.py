@@ -1,22 +1,36 @@
 import sys
+from collections import defaultdict
+from typing import List, Dict
 
 from amr_utils.alignments import AMR_Alignment
 
 
 class AMR:
 
-    def __init__(self, tokens:list=None, id=None, root=None, nodes:dict=None, edges:list=None, metadata:dict=None):
+    def __init__(
+            self,
+            tokens: list = None,
+            amr_id=None,
+            root=None,
+            nodes: dict = None,
+            edges: list = None,
+            metadata: dict = None
+    ):
 
-        if edges is None: edges = []
-        if nodes is None: nodes = {}
-        if tokens is None: tokens = []
-        if metadata is None: metadata = {}
+        if edges is None:
+            edges = []
+        if nodes is None:
+            nodes = {}
+        if tokens is None:
+            tokens = []
+        if metadata is None:
+            metadata = {}
 
         self.tokens = tokens
         self.root = root
         self.nodes = nodes
         self.edges = edges
-        self.id = 'None' if id is None else id
+        self.id = 'None' if amr_id is None else amr_id
         self.metadata = metadata
 
     def copy(self):
@@ -29,7 +43,7 @@ class AMR:
         return graph_string(self)
 
     def amr_string(self):
-        return metadata_string(self) + graph_string(self)+'\n\n'
+        return metadata_string(self) + graph_string(self) + '\n\n'
 
     def get_alignment(self, alignments, token_id=None, node_id=None, edge=None):
         if not isinstance(alignments, dict):
@@ -48,17 +62,51 @@ class AMR:
     def triples(self, normalize_inverse_edges=False):
         taken_nodes = {self.root}
         yield self.root, ':instance', self.nodes[self.root]
-        for s,r,t in self.edges:
+        for s, r, t in self.edges:
             if not self.nodes[t][0].isalpha() or self.nodes[t] in ['imperative', 'expressive', 'interrogative']:
                 yield s, r, self.nodes[t]
                 continue
-            if normalize_inverse_edges and r.endswith('-of') and r not in [':consist-of', ':prep-out-of', ':prep-on-behalf-of']:
+            if normalize_inverse_edges and r.endswith('-of') and r not in [
+                ':consist-of', ':prep-out-of', ':prep-on-behalf-of'
+            ]:
                 yield t, r[:-len('-of')], s
             else:
                 yield s, r, t
             if t not in taken_nodes:
                 yield t, ':instance', self.nodes[t]
                 taken_nodes.add(t)
+
+    def get_edges_for_node(self, node: str) -> list:
+        return [(s, r, t) for s, r, t in self.edges if s == node or t == node]
+
+    def get_children_or_parents_for_node(
+            self, node: str, parents: bool = False
+    ) -> List[str]:
+        """
+        Given a node in the AMR, return the parent or child nodes.
+        Returns children by default.
+        """
+        return_node_set = set()  # We use sets first to avoid duplicates
+        # Ensure that we don't handle both
+        children = False if parents else True
+        for s, _, t in self.edges:
+            if children:
+                if s == node:
+                    return_node_set.add(t)
+            elif parents:
+                if t == node:
+                    return_node_set.add(s)
+        return list(return_node_set)
+
+    def edge_mapping(self) -> Dict[str, Dict[str, List[str]]]:
+        """
+        Provides a mapping from parents to their children and roles
+        {"parent": {"role1": ["child1"], "role2": ["child2", "child3"]}, ...}
+        """
+        edge_mapping = defaultdict(lambda: defaultdict(list))
+        for parent, role, arg in self.edges:
+            edge_mapping[parent][role].append(arg)
+        return edge_mapping
 
     def _rename_node(self, a, b):
         if b in self.nodes:
@@ -68,22 +116,23 @@ class AMR:
         if self.root == a:
             self.root = b
         for i, e in enumerate(self.edges):
-            s,r,t = e
+            s, r, t = e
             if a in [s, t]:
-                if s==a: s=b
-                if t==a: t=b
-                self.edges[i] = (s,r,t)
-
+                if s == a:
+                    s = b
+                if t == a:
+                    t = b
+                self.edges[i] = (s, r, t)
 
 
 def metadata_string(amr):
-    '''
+    """
         # ::id sentence id
         # ::tok tokens...
         # ::node node_id node alignments
         # ::root root_id root
         # ::edge src label trg src_id trg_id alignments
-    '''
+    """
     output = ''
     # id
     if amr.id:
@@ -92,11 +141,11 @@ def metadata_string(amr):
     output += '# ::tok ' + (' '.join(amr.tokens)) + '\n'
     # metadata
     for label in amr.metadata:
-        if label not in ['tok','id','node','root','edge','alignments']:
+        if label not in ['tok', 'id', 'node', 'root', 'edge', 'alignments']:
             output += f'# ::{label} {str(amr.metadata[label])}\n'
     # nodes
     for n in amr.nodes:
-        output += f'# ::node\t{n}\t{amr.nodes[n].replace(" ","_") if n in amr.nodes else "None"}\n'
+        output += f'# ::node\t{n}\t{amr.nodes[n].replace(" ", "_") if n in amr.nodes else "None"}\n'
     # root
     root = amr.root
     if amr.root:
@@ -133,7 +182,7 @@ def graph_string(amr):
     while '[[' in amr_string:
         tab = '\t' * depth
         for n in nodes.copy():
-            id = new_ids[n] if n in new_ids else 'x91'
+            amr_id = new_ids[n] if n in new_ids else 'x91'
             concept = amr.nodes[n] if n in new_ids and amr.nodes[n] else 'None'
             edges = sorted([e for e in amr.edges if e[0] == n], key=lambda x: x[1])
             targets = set(t for s, r, t in edges)
@@ -143,25 +192,25 @@ def graph_string(amr):
                 children = f'\n{tab}' + children
             if n not in completed:
                 if (concept[0].isalpha() and concept not in ['imperative', 'expressive', 'interrogative']) or targets:
-                    amr_string = amr_string.replace(f'[[{n}]]', f'({id}/{concept}{children})', 1)
+                    amr_string = amr_string.replace(f'[[{n}]]', f'({amr_id}/{concept}{children})', 1)
                 else:
                     amr_string = amr_string.replace(f'[[{n}]]', f'{concept}')
                 completed.add(n)
-            amr_string = amr_string.replace(f'[[{n}]]', f'{id}')
+            amr_string = amr_string.replace(f'[[{n}]]', f'{amr_id}')
             nodes.remove(n)
             nodes.update(targets)
         depth += 1
     if len(completed) < len(amr.nodes):
         missing_nodes = [n for n in amr.nodes if n not in completed]
         missing_edges = [(s, r, t) for s, r, t in amr.edges if s in missing_nodes or t in missing_nodes]
-        missing_nodes= ', '.join(f'{n}/{amr.nodes[n]}' for n in missing_nodes)
-        missing_edges = ', '.join(f'{s}/{amr.nodes[s]} {r} {t}/{amr.nodes[t]}' for s,r,t in missing_edges)
+        missing_nodes = ', '.join(f'{n}/{amr.nodes[n]}' for n in missing_nodes)
+        missing_edges = ', '.join(f'{s}/{amr.nodes[s]} {r} {t}/{amr.nodes[t]}' for s, r, t in missing_edges)
         print('[amr]', 'Failed to print AMR, '
               + str(len(completed)) + ' of ' + str(len(amr.nodes)) + ' nodes printed:\n '
-              + str(amr.id) +':\n'
+              + str(amr.id) + ':\n'
               + amr_string + '\n'
-              + 'Missing nodes: ' + missing_nodes +'\n'
-              + 'Missing edges: ' + missing_edges +'\n',
+              + 'Missing nodes: ' + missing_nodes + '\n'
+              + 'Missing edges: ' + missing_edges + '\n',
               file=sys.stderr)
     if not amr_string.startswith('('):
         amr_string = '(' + amr_string + ')'
