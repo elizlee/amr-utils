@@ -80,24 +80,21 @@ class AMR:
     def get_edges_for_node(self, node: str) -> list:
         return [(s, r, t) for s, r, t in self.edges if s == node or t == node]
 
-    def get_children_or_parents_for_node(
-            self, node: str, parents: bool = False
-    ) -> List[str]:
-        """
-        Given a node in the AMR, return the parent or child nodes.
-        Returns children by default.
-        """
-        return_node_set = set()  # We use sets first to avoid duplicates
-        # Ensure that we don't handle both
-        children = False if parents else True
+    def get_children_for_node(self, node: str):
+        """Given a node in the AMR, return its child nodes"""
+        child_set = set()  # We use sets first to avoid duplicates
         for s, _, t in self.edges:
-            if children:
-                if s == node:
-                    return_node_set.add(t)
-            elif parents:
-                if t == node:
-                    return_node_set.add(s)
-        return list(return_node_set)
+            if s == node:
+                child_set.add(t)
+        return list(child_set)
+
+    def get_parents_for_node(self, node: str):
+        """Given a node in the AMR, return its parent nodes"""
+        parent_set = set()
+        for s, _, t in self.edges:
+            if t == node:
+                parent_set.add(s)
+        return list(parent_set)
 
     def edge_mapping(self) -> Dict[str, Dict[str, List[str]]]:
         """
