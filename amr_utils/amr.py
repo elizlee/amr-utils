@@ -123,6 +123,46 @@ class AMR:
                         token_list_for_node.append(token_text)
         return token_list_for_node
 
+    def get_ordered_node_labels(self) -> List[str]:
+        """
+        Given the AMR graph, return the list of node labels,
+        starting from the root and traveling down the graph.
+        """
+        # Create the edge dict, which is a mapping between
+        # a parent node and a list of all of its child nodes
+        node_dict = self.nodes
+        edge_dict = defaultdict(list)
+        root = self.root
+        for s, r, t in self.edges:
+            edge_dict[s].append(t)
+
+        # Create ordered list of node labels starting from the root
+        label_list = [node_dict[root]]
+        processed_nodes = {root}
+
+        def fill_label_list(parent_list: List[str]) -> None:
+            """
+            Given the list of nodes on one level of the AMR graph,
+            add the child labels of each node to label_list.
+            """
+            child_nodes: List[str] = []
+            for parent in parent_list:
+                children = edge_dict.get(parent)
+                if children:
+                    child_nodes.extend(
+                        [child for child in children if child not in processed_nodes]
+                    )
+            # First add labels on this level
+            for child in child_nodes:
+                label_list.append(node_dict[child])
+                processed_nodes.add(child)
+            # Process the children of the next level
+            if child_nodes:
+                fill_label_list(child_nodes)
+
+        fill_label_list([root])
+        return label_list
+
     def _rename_node(self, a, b):
         if b in self.nodes:
             raise Exception('Rename Node: Tried to use existing node name:', b)
